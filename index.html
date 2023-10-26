@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Snake time</title>
+    <style>
+        .container {
+            border-radius: 10px;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        .outlined {
+            outline: 1px solid black;
+        }
+
+        .padded {
+            padding: 15px;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .playarea {
+            max-width: fit-content;
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container outlined padded">
+        <div class="header center">
+            <h1>Snake time</h1>
+        </div>
+        <div class="playarea outlined" id="playarea">
+        </div>
+    </div>
+</body>
+
+<script>
+    const rows = 15;
+    const columns = 10;
+    const startx = 3;
+    const starty = 5;
+    let dir = 0;
+
+    document.addEventListener("keydown", (event) => {
+        if (event.isComposing || event.keyCode === 229) {
+            return;
+        }
+
+        switch (event.keyCode) {
+            case 39:
+                if (dir !== 2) {
+                    dir = 0;
+                }
+                break;
+            case 40:
+                if (dir !== 3) {
+                    dir = 1;
+                }
+                break;
+            case 37:
+                if (dir !== 0) {
+                    dir = 2;
+                }
+                break;
+            case 38:
+                if (dir !== 1) {
+                    dir = 3;
+                }
+                break;
+            default:
+                return;
+        }
+
+    });
+
+    let snake = {};
+
+    const initializeSnake = () => {
+
+        dir = 0;
+
+        snake = {
+            dir: 0,
+            x: startx,
+            y: starty,
+            pixels: []
+        };
+    }
+
+    const clearGrid = (grid) => {
+        for (pixel of grid) {
+            updatePixel(pixel.x, pixel.y, 0);
+        }
+        updateGridVisual();
+    }
+
+    const generateGrid = () => {
+        let playarea = document.getElementById("playarea");
+        let pixels = [];
+        let pixelIndex = 0;
+        for (let i = 0; i <= columns; i++) {
+            for (let u = 0; u <= rows; u++) {
+
+                const itemId = generateId(u, i);
+
+                pixels.push({
+                    x: u,
+                    y: i,
+                    i: pixelIndex,
+                    id: itemId,
+                    type: 0
+                });
+
+                pixelIndex++;
+
+                let checkbox = document.createElement("input")
+                checkbox.setAttribute("id", itemId);
+                checkbox.setAttribute("type", "checkbox")
+                playarea.appendChild(checkbox);
+            }
+            const br = document.createElement("br");
+            playarea.appendChild(br)
+        }
+
+        return pixels;
+
+    }
+
+    const generateId = (x, y) => {
+        const fullString = "x" + x + "y" + y;
+        const b64string = btoa(fullString);
+        return b64string;
+    }
+
+    const getPixel = (x, y) => {
+        const pixel = grid.filter(obj => {
+            return (obj.x === x && obj.y === y)
+        })
+
+        return pixel[0];
+    }
+
+    const updatePixel = (x, y, newType) => {
+        let pixel = getPixel(x, y);
+        pixel.type = newType;
+        grid[pixel.pixelIndex] = pixel;
+    }
+
+    const updateGridVisual = () => {
+        for (let pixel of grid) {
+            const checkbox = document.getElementById(pixel.id);
+            switch (pixel.type) {
+                case 0:
+                    checkbox.setAttribute("type", "checkbox");
+                    checkbox.removeAttribute("checked");
+                    break;
+                case 1:
+                    checkbox.setAttribute("type", "checkbox");
+                    checkbox.setAttribute("checked", "true");
+                    break;
+                case 2:
+                    checkbox.setAttribute("type", "radio");
+                    checkbox.setAttribute("checked", "true");
+                    break;
+                default:
+                    alert("wtf error");
+            }
+        }
+    }
+
+    const generateFood = (grid) => {
+        const availablePixels = grid.filter(obj => {
+            return obj.type === 0;
+        })
+
+        const selectedPixel = choose(availablePixels);
+
+        updatePixel(selectedPixel.x, selectedPixel.y, 2);
+
+    }
+
+    function choose(choices) {
+        var index = Math.floor(Math.random() * choices.length);
+        return choices[index];
+    }
+
+    const gameplayLoop = () => {
+
+        if (snake.pixels.length === 0) {
+            snake.pixels.push(getPixel(snake.x, snake.y));
+        }
+
+        snake.dir = dir;
+
+        switch (snake.dir) {
+            case 0:
+                snake.x++;
+                break;
+            case 1:
+                snake.y++;
+                break;
+            case 2:
+                snake.x--;
+                break;
+            case 3:
+                snake.y--;
+                break;
+        }
+
+        if (snake.x > rows) {
+            snake.x = 0;
+        } else if (snake.x < 0) {
+            snake.x = rows;
+        }
+
+        if (snake.y > columns) {
+            snake.y = 0;
+        } else if (snake.y < 0) {
+            snake.y = columns;
+        }
+
+        let currentPixel = getPixel(snake.x, snake.y);
+
+        switch (currentPixel.type) {
+            case 0:
+                snake.pixels.push(currentPixel);
+                const removedPixel = snake.pixels.shift();
+                updatePixel(removedPixel.x, removedPixel.y, 0)
+                break;
+            case 1:
+                clearGrid(grid);
+                initializeSnake();
+                generateFood(grid);
+                dir = 0;
+                break;
+            case 2:
+                snake.pixels.push(currentPixel);
+                generateFood(grid);
+        }
+
+        for (snakepixel of snake.pixels) {
+            updatePixel(snakepixel.x, snakepixel.y, 1);
+        }
+
+        updateGridVisual();
+
+    }
+
+    let grid = generateGrid();
+    initializeSnake();
+    updatePixel(startx, starty, 1);
+    generateFood(grid);
+    updateGridVisual();
+
+    setInterval(gameplayLoop, 200);
+</script>
+
+</html>
