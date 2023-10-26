@@ -44,6 +44,7 @@
     const columns = 10;
     const startx = 3;
     const starty = 5;
+    const startlength = 3;
     let dir = 0;
 
     document.addEventListener("keydown", (event) => {
@@ -88,8 +89,18 @@
             dir: 0,
             x: startx,
             y: starty,
-            pixels: []
+            pixels: [getPixel(startx, starty)]
         };
+
+        for (let i = 0; i < startlength - 1; i++) {
+            snake.pixels.unshift(getPixel(startx - i, starty))
+        }
+
+        for (pixel of snake.pixels) {
+            updatePixel(pixel.x, pixel.y, 1)
+        }
+
+        updateGridVisual();
     }
 
     const clearGrid = (grid) => {
@@ -167,8 +178,6 @@
                     checkbox.setAttribute("type", "radio");
                     checkbox.setAttribute("checked", "true");
                     break;
-                default:
-                    alert("wtf error");
             }
         }
     }
@@ -190,10 +199,6 @@
     }
 
     const gameplayLoop = () => {
-
-        if (snake.pixels.length === 0) {
-            snake.pixels.push(getPixel(snake.x, snake.y));
-        }
 
         snake.dir = dir;
 
@@ -253,7 +258,6 @@
 
     let grid = generateGrid();
     initializeSnake();
-    updatePixel(startx, starty, 1);
     generateFood(grid);
     updateGridVisual();
 
